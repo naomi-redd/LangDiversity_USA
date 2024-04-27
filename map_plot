@@ -8,7 +8,7 @@ import pandas as pd
 import numpy as np
 
 
-data = pd.read_csv("languages_clean.csv")
+df = pd.read_csv("languages_clean.csv")
 #-----------------------------------------------------------------------------
 
 # ToDo:
