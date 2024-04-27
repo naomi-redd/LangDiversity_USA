@@ -8,13 +8,16 @@ import pandas as pd
 import numpy as np
 
 
-df = pd.read_csv("languages_clean.csv")
+data = pd.read_csv("languages_clean.csv", sep=",")
 #-----------------------------------------------------------------------------
 
 # ToDo:
 #   - Slider bar labels are too small
 #   - More customization in the tooltips
 #   - Button for the log-x axis not yet implemented
+
+# ToDo:
+# 
 
 TITLE           = 'Language Diversity in the United States'
 
@@ -28,7 +31,7 @@ METRIC_DROPDOWN = 'metric-dropdown'
 LOG_X           = 'logarithmic-x'
 
 METRICS = {
-    'lifeExp'   : 'Life Expectancy',
+    ''   : 'Life Expectancy',
     'pop'       : 'Population',
     'gdpPercap' : 'GDP per capita'
     }
@@ -73,7 +76,7 @@ def get_metric_key(metric_name: str) -> str:
 )
 
 def world_map(metric_name: str,
-              df: pd.DataFrame,
+                df: pd.DataFrame,
               ) -> go.Figure:
 
     metric_id = get_metric_key(metric_name)
@@ -84,7 +87,7 @@ def world_map(metric_name: str,
                         hover_name='country',
                         hover_data={'iso_alpha': False},
                         range_color = [0, data[metric_id].max()],
-                        labels={metric_id: metric_name, 'year': 'Year'}
+                        labels={metric_id: metric_name}
                     )
     fig.update_layout(
         margin={
