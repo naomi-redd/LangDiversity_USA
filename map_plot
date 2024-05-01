@@ -82,10 +82,10 @@ def world_map(metric_name: str,
     metric_id = get_metric_key(metric_name)
 
     fig = px.choropleth(data_frame=df,
-                        locations='iso_alpha',
+                        locations='State',
                         color=metric_id,
-                        hover_name='country',
-                        hover_data={'iso_alpha': False},
+                        hover_name='State',
+                        hover_data={'State': False},
                         range_color = [0, data[metric_id].max()],
                         labels={metric_id: metric_name}
                     )
@@ -109,9 +109,12 @@ def world_distribution(metric_name: str = None,
     
     metric_id = get_metric_key(metric_name)
 
-    fig = px.histogram(data_frame=df[metric_id],
-                       range_x=[data[metric_id].min(), data[metric_id].max()]
-                       )
+    for i, (age_group, color) in enumerate(zip(.index, ['g', 'm', 'r'])):
+        px.histogram(positions + i * bar_width, df_age.loc[age_group], width=bar_width, label=age_group, color=color)
+
+    #fig = px.histogram(data_frame=df[metric_id],
+    #                   range_x=[data[metric_id].min(), data[metric_id].max()]
+    #                   )
     
     # https://community.plotly.com/t/histogram-bin-size-with-plotly-express/38927/4
     #fig.update_traces() <- good place to use get_clean_bins
