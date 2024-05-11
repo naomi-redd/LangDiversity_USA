@@ -52,12 +52,12 @@ def update_heatmap(selected_data, selected_language):
                          columns_to_display]
 
     # Generate heatmap using Plotly Express
-    fig = px.choropleth(data_frame = df, 
+    fig = px.choropleth(data_frame = filtered_df, 
                         locations='State', 
                         locationmode='USA-states',
-                        color=[0, df.loc[('Language' == selected_language), columns_to_display]], 
+                        color=columns_to_display[0], #[0, df.loc[('Language' == selected_language), columns_to_display]], 
                         scope='usa', 
-                        hover_name='State',
+                       # hover_name='State',
                         title=f'{selected_language} Speakers - {selected_data.capitalize()} Heatmap',
                         color_continuous_scale='Viridis')
 
