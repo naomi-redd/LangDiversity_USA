@@ -1,5 +1,74 @@
-import geopandas as gpd
-import pandas as pd
-import matplotlib.pyplot as plt
+import plotly.express as px
+import plotly.graph_objects as go
 
-data = pd.read_csv("languages_clean.csv", sep=",")
+from dash import Dash, html, dcc, Input, Output, State, callback
+
+from datetime import datetime as dt
+import pandas as pd
+import numpy as np
+
+METRIC_RADIO = "metric-radio"
+
+data = pd.read_csv("percent_languages.csv", sep=",")
+
+def main() -> None:
+    app = Dash()
+    app.title = "Language Diversity in USA"
+    app.layout = create_layout(app)
+    create_map(app)
+    app.run()
+
+html.Label('Radio Items'),
+dcc.RadioItems(
+    id = "metric-radio",
+    options = , 
+style={'padding': 10, 'flex': 1}),
+
+
+# Define app layout
+def create_layout(app: Dash) -> html.Div:
+    return html.Div([
+        dcc.Dropdown(
+            id='dropdown',
+            options=[
+                {'label': 'Age', 'value': 'age'},
+                {'label': 'Poverty', 'value': 'poverty'},
+                {'label': 'Education', 'value': 'education'}
+            ],
+            value='age'
+        ),
+        dcc.Graph(id='heatmap')
+    ])
+
+# Define callback to update the heatmap based on dropdown selection
+@callback(
+    Output('heatmap', 'figure'),
+    Input('dropdown', 'value')
+)
+
+def create_map(selected_value):
+    if selected_value == 'age':
+        columns_to_display = ['5 to 17', '18 to 64', '65+']
+    elif selected_value == 'poverty':
+        columns_to_display = ['Below poverty level', 'At or above poverty level']
+    elif selected_value == 'education':
+        columns_to_display = ['Less than high school graduate', 'High school graduate',
+                              'Some college or associate\'s degree', 'Bachelor\'s degree or higher']
+
+    # Generate heatmap using Plotly Express
+    fig = px.choropleth(
+        data, 
+        locations='State', 
+        locationmode='USA-states', 
+        color=columns_to_display[0],
+        scope='usa', 
+        hover_name='State', 
+        title=f'{selected_value.capitalize()} Heatmap',
+        color_continuous_scale='Viridis'
+        )
+    
+    
+    return fig
+
+if __name__ == "__main__":
+    main()
