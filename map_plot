@@ -8,7 +8,7 @@ import pandas as pd
 import numpy as np
 
 
-data = pd.read_csv("languages_clean.csv", sep=",")
+data = pd.read_csv("percent_languages.csv", sep=",")
 #-----------------------------------------------------------------------------
 
 # ToDo:
@@ -28,17 +28,17 @@ VAL             = 'value'
 FIG             = 'figure'
 
 METRIC_DROPDOWN = 'metric-dropdown'
-LOG_X           = 'logarithmic-x'
+
 
 METRICS = {
-    ''   : 'Life Expectancy',
-    'pop'       : 'Population',
-    'gdpPercap' : 'GDP per capita'
+    'Only English'      : 'Only English',
+    'Other Language'    : 'Other Language',
+    'Spanish'           : 'Spanish'
     }
 
 DEFAULTS = {
-    'metric_id'   : 'lifeExp',
-    'metric_name' : METRICS['lifeExp']
+    'metric_id'   : 'Only English',
+    'metric_name' : METRICS['Only English']
     }
 
 def run_app():
@@ -50,9 +50,6 @@ def run_app():
     app.run(debug=True)
     return
 
-#def get_default_df() -> pd.DataFrame:
- #   idx = data['year'] == data['year'].min()
-  #  return data[idx]
 
 def get_default_metric_id() -> str:
     return list(METRICS.keys())[0]
@@ -75,13 +72,13 @@ def get_metric_key(metric_name: str) -> str:
               )
 )
 
-def world_map(metric_name: str,
+def US_map(metric_name: str,
                 df: pd.DataFrame,
               ) -> go.Figure:
 
     metric_id = get_metric_key(metric_name)
 
-    fig = px.choropleth(data_frame=df,
+    fig = px.choropleth(data_frame=df,     ## option to choose usa (scope)
                         locations='State',
                         color=metric_id,
                         hover_name='State',
@@ -109,7 +106,7 @@ def world_distribution(metric_name: str = None,
     
     metric_id = get_metric_key(metric_name)
 
-    for i, (age_group, color) in enumerate(zip(.index, ['g', 'm', 'r'])):
+    for i, (age_group, color) in enumerate(zip(df.index, ['g', 'm', 'r'])):
         px.histogram(positions + i * bar_width, df_age.loc[age_group], width=bar_width, label=age_group, color=color)
 
     #fig = px.histogram(data_frame=df[metric_id],
@@ -141,7 +138,7 @@ def apply_main_layout(app: Dash) -> None:
                                    )
     
     main_map = dcc.Graph(id=MAP_ID,
-                         figure=world_map(metric_name=DEFAULTS['metric_name'],
+                         figure=US_map(metric_name=DEFAULTS['metric_name'],
                                           ),
                          #responsive=True,
                          style={
