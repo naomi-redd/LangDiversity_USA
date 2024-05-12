@@ -22,11 +22,14 @@ app.layout = html.Div([
     dcc.RadioItems(
         id='language-selector',
         options=[
+            {'label': 'Only English', 'value': 'Only English'},
             {'label': 'Spanish', 'value': 'Spanish'},
             {'label': 'Other Language', 'value': 'Other Language'}
         ],
-        value='Spanish',
-        labelStyle={'display': 'block'}
+        value='Only English',
+        labelStyle={'display': 'block'},
+        inline = True,
+        
     ),
     dcc.Graph(id='heatmap')
 ])
@@ -48,16 +51,15 @@ def update_heatmap(selected_data, selected_language):
                               'Some college or associate\'s degree', 'Bachelor\'s degree or higher']
 
     # Filter dataframe based on selected language
-    filtered_df = df.loc[(df['Language'] == selected_language) & (df['Language'] == "Only English"),
-                         columns_to_display]
+    filtered_df = df.loc[df['Language'] == selected_language]
 
     # Generate heatmap using Plotly Express
     fig = px.choropleth(data_frame = filtered_df, 
                         locations='State', 
                         locationmode='USA-states',
-                        color=columns_to_display[0], #[0, df.loc[('Language' == selected_language), columns_to_display]], 
+                        color=columns_to_display[0], 
                         scope='usa', 
-                       # hover_name='State',
+                        hover_name='State',
                         title=f'{selected_language} Speakers - {selected_data.capitalize()} Heatmap',
                         color_continuous_scale='Viridis')
 
