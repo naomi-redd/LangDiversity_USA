@@ -1,90 +1,174 @@
-import dash
-from dash import dcc, html, Input, Output
-import plotly.express as px
+#Import functions
 import pandas as pd
-
-df = pd.read_csv("percent_languages.csv", sep=",")
-
-app = dash.Dash(__name__)
-
-# Define app layout
-app.layout = html.Div([
-    dcc.RadioItems(
-        id='data-selector',
-        options=[
-            {'label': 'Age', 'value': 'age'},
-            {'label': 'Poverty', 'value': 'poverty'},
-            {'label': 'Education', 'value': 'education'}
-        ],
-        value='age',
-        labelStyle={'display': 'block'}
-    ),
-    dcc.RadioItems(
-        id='language-selector',
-        options=[
-            {'label': 'Spanish', 'value': 'Spanish'},
-            {'label': 'Other Language', 'value': 'Other Language'}
-        ],
-        value='Spanish',
-        labelStyle={'display': 'block'}
-    ),
-    dcc.Graph(id='heatmap')
-])
-
-# Define callback to update the heatmap based on selected data and language
-@app.callback(
-    Output('heatmap', 'figure'),
-    [Input('data-selector', 'value'),
-     Input('language-selector', 'value')]
-)
-def update_heatmap(selected_data, selected_language):
-    # Select columns based on the selected data
-    if selected_data == 'age':
-        columns_to_display = ['5 to 17', '18 to 64', '65+']
-    elif selected_data == 'poverty':
-        columns_to_display = ['Below poverty level', 'At or above poverty level']
-    elif selected_data == 'education':
-        columns_to_display = ['Less than high school graduate', 'High school graduate',
-                              'Some college or associate\'s degree', 'Bachelor\'s degree or higher']
-
-    # Filter dataframe based on selected language
-    filtered_df = df[df['Language'] == selected_language]
-
-    # Generate heatmap using Plotly Express
-    fig = px.choropleth(filtered_df, locations='State', locationmode='USA-states',
-                        color=columns_to_display[0], scope='usa', hover_name='State',
-                        title=f'{selected_language} Speakers - {selected_data.capitalize()} Heatmap',
-                        color_continuous_scale='Viridis')
-
-    # Add additional columns if necessary
-    if len(columns_to_display) > 1:
-        for col in columns_to_display[1:]:
-            fig.add_scattergeo(locations=filtered_df['State'], locationmode='USA-states',
-                               marker=dict(color=filtered_df[col]), name=col)
-
-    return fig
-
-if __name__ == '__main__':
-    app.run_server(debug=True)
-
-
-########### code ########
-#########################
-
-# Generate heatmap using Plotly Express
-    fig = px.choropleth(data_frame = filtered_df, 
-                        locations='State', 
-                        locationmode='USA-states',
-                        color=columns_to_display, 
-                        scope='usa', 
-                        hover_name='State',
-                        title=f'{selected_language} Speakers - {selected_data.capitalize()} Heatmap',
-                        color_continuous_scale='Viridis')
-
-    # Add additional columns if necessary
-    if len(columns_to_display) > 1:
-        for col in columns_to_display[1:]:
-            fig.add_scattergeo(locations=df['State'], locationmode='USA-states',
-                               marker=dict(color=filtered_df[col]), name=col)
-
-    return fig
+ 
+ 
+#Define function
+def state_abbrev_mapping(df, col, output_abbr = False, add_new_col = False, new_col = None,  case = None):
+    #df =  the Pandas dataframe.
+    #col = String. The column with the state name or abbreviation you wish to use
+    #output_abbr = True/False. Do you want to the output to the the state abbreviation? The other option is the state full name.
+    #add_new_col = True/False. Do you want to add a new column? The new column will overwrite the inputted column if not.
+    #new_col = String. Name of new column you wish to add.
+    #case = 'upper', 'lower', or None. Do you want to specify a letter-case for the data?
+ 
+ 
+    #List of states
+    state2abbrev = {
+        'Alaska': 'AK',
+        'Alabama': 'AL',
+        'Arkansas': 'AR',
+        'Arizona': 'AZ',
+        'California': 'CA',
+        'Colorado': 'CO',
+        'Connecticut': 'CT',
+        'District of Columbia': 'DC',
+        'Delaware': 'DE',
+        'Florida': 'FL',
+        'Georgia': 'GA',
+        'Hawaii': 'HI',
+        'Iowa': 'IA',
+        'Idaho': 'ID',
+        'Illinois': 'IL',
+        'Indiana': 'IN',
+        'Kansas': 'KS',
+        'Kentucky': 'KY',
+        'Louisiana': 'LA',
+        'Massachusetts': 'MA',
+        'Maryland': 'MD',
+        'Maine': 'ME',
+        'Michigan': 'MI',
+        'Minnesota': 'MN',
+        'Missouri': 'MO',
+        'Mississippi': 'MS',
+        'Montana': 'MT',
+        'North Carolina': 'NC',
+        'North Dakota': 'ND',
+        'Nebraska': 'NE',
+        'New Hampshire': 'NH',
+        'New Jersey': 'NJ',
+        'New Mexico': 'NM',
+        'Nevada': 'NV',
+        'New York': 'NY',
+        'Ohio': 'OH',
+        'Oklahoma': 'OK',
+        'Oregon': 'OR',
+        'Pennsylvania': 'PA',
+        'Rhode Island': 'RI',
+        'South Carolina': 'SC',
+        'South Dakota': 'SD',
+        'Tennessee': 'TN',
+        'Texas': 'TX',
+        'Utah': 'UT',
+        'Virginia': 'VA',
+        'Vermont': 'VT',
+        'Washington': 'WA',
+        'Wisconsin': 'WI',
+        'West Virginia': 'WV',
+        'Wyoming': 'WY',
+        'Puerto Rico': 'PR',
+        'Virigin Islands': 'VI'
+    }
+ 
+    #List of states
+    abbrev2state = {
+        'AK': 'Alaska',
+        'AL': 'Alabama',
+        'AR': 'Arkansas',
+        'AZ': 'Arizona',
+        'CA': 'California',
+        'CO': 'Colorado',
+        'CT': 'Connecticut',
+        'DC': 'District of Columbia',
+        'DE': 'Delaware',
+        'FL': 'Florida',
+        'GA': 'Georgia',
+        'HI': 'Hawaii',
+        'IA': 'Iowa',
+        'ID': 'Idaho',
+        'IL': 'Illinois',
+        'IN': 'Indiana',
+        'KS': 'Kansas',
+        'KY': 'Kentucky',
+        'LA': 'Louisiana',
+        'MA': 'Massachusetts',
+        'MD': 'Maryland',
+        'ME': 'Maine',
+        'MI': 'Michigan',
+        'MN': 'Minnesota',
+        'MO': 'Missouri',
+        'MS': 'Mississippi',
+        'MT': 'Montana',
+        'NC': 'North Carolina',
+        'ND': 'North Dakota',
+        'NE': 'Nebraska',
+        'NH': 'New Hampshire',
+        'NJ': 'New Jersey',
+        'NM': 'New Mexico',
+        'NV': 'Nevada',
+        'NY': 'New York',
+        'OH': 'Ohio',
+        'OK': 'Oklahoma',
+        'OR': 'Oregon',
+        'PA': 'Pennsylvania',
+        'RI': 'Rhode Island',
+        'SC': 'South Carolina',
+        'SD': 'South Dakota',
+        'TN': 'Tennessee',
+        'TX': 'Texas',
+        'UT': 'Utah',
+        'VA': 'Virginia',
+        'VT': 'Vermont',
+        'WA': 'Washington',
+        'WI': 'Wisconsin',
+        'WV': 'West Virginia',
+        'WY': 'Wyoming',
+        'PR': 'Puerto Rico',
+        'VI': 'Virigin Islands'
+    }
+     
+    #If user wants to add a new column
+    if add_new_col == False:
+         
+        #Is the output an abbreviation?
+        if output_abbr == True:
+            df[col] = df[col].str.strip().replace(state2abbrev)
+        else:
+            df[col] = df[col].str.strip().replace(abbrev2state)
+             
+        #Does the user want a specific case sensitivity?
+        if case == 'upper':
+            df[col] = df[col].str.upper()
+        elif case == 'lower':
+            df[col] = df[col].str.lower()
+             
+    #If user not want to add a new column       
+    if add_new_col == True:
+         
+        #If new column name is missing
+        if new_col == None:
+            #Prompt user to enter a new column name
+            print("Error: You requested to add a new column but did not specify a new column name. Please add a column name with new_col = ''")
+            return()
+         
+        #Is the output an abbreviation?
+        if output_abbr == True:
+            df[new_col] = df[col].str.strip().replace(state2abbrev)
+        else:
+            df[new_col] = df[col].str.strip().replace(abbrev2state)
+ 
+        #Does the user want a specific case sensitivity?
+        if case == 'upper':
+            df[new_col] = df[new_col].str.upper()
+        elif case == 'lower':
+            df[new_col] = df[new_col].str.lower()
+ 
+    return(df)
+ 
+ 
+#Call Function Example
+state_abbrev_mapping(df = df,
+                     col= 'State_Abbrev',
+                     output_abbr = False,
+                     add_new_col = True,
+                     new_col = 'State_Full',
+                     case = 'upper')
