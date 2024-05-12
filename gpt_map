@@ -2,8 +2,13 @@ import dash
 from dash import dcc, html, Input, Output
 import plotly.express as px
 import pandas as pd
+import plotly.graph_objects as go
+import state_abbrev
 
 df = pd.read_csv("percent_languages.csv", sep=",")
+
+df.state_abbrev_mapping(df, 'State', output_abbr = True)
+
 
 app = dash.Dash(__name__)
 
@@ -29,7 +34,7 @@ app.layout = html.Div([
         value='Only English',
         labelStyle={'display': 'block'},
         inline = True,
-        
+
     ),
     dcc.Graph(id='heatmap')
 ])
@@ -50,14 +55,15 @@ def update_heatmap(selected_data, selected_language):
         columns_to_display = ['Less than high school graduate', 'High school graduate',
                               'Some college or associate\'s degree', 'Bachelor\'s degree or higher']
 
-    # Filter dataframe based on selected language
+# Filter dataframe based on selected language
     filtered_df = df.loc[df['Language'] == selected_language]
 
-    # Generate heatmap using Plotly Express
+    
+# Generate heatmap using Plotly Express
     fig = px.choropleth(data_frame = filtered_df, 
                         locations='State', 
                         locationmode='USA-states',
-                        color=columns_to_display[0], 
+                        color='18 to 64', 
                         scope='usa', 
                         hover_name='State',
                         title=f'{selected_language} Speakers - {selected_data.capitalize()} Heatmap',
@@ -70,6 +76,7 @@ def update_heatmap(selected_data, selected_language):
                                marker=dict(color=filtered_df[col]), name=col)
 
     return fig
+
 
 if __name__ == '__main__':
     app.run_server(debug=True)
