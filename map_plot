@@ -107,7 +107,7 @@ def world_distribution(metric_name: str = None,
     metric_id = get_metric_key(metric_name)
 
     for i, (age_group, color) in enumerate(zip(df.index, ['g', 'm', 'r'])):
-        px.histogram(positions + i * bar_width, df_age.loc[age_group], width=bar_width, label=age_group, color=color)
+        px.histogram(df.loc[age_group], label=age_group, color=color)
 
     #fig = px.histogram(data_frame=df[metric_id],
     #                   range_x=[data[metric_id].min(), data[metric_id].max()]

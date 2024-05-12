@@ -1,12 +1,11 @@
-import dash
 from dash import Dash, dcc, html, Input, Output, State, callback
 import plotly.express as px
 import pandas as pd
 import plotly.graph_objects as go
 
 MAP_ID = 'heatmap'
-DATA_ID = 'data_selector'
-LANG_ID = "language_selector"
+DATA_RADIO = 'data-selector'
+LANG_RADIO = "language-selector"
 FIG = 'figure'
 VAL = 'value'
 TITLE           = 'Language Diversity in the United States'
@@ -17,7 +16,7 @@ DATA_METRICS = {'Age': 'Age',
                 }
 
 DATA_DEFAULT = {
-    'data_metric_id'   : 'Age',
+    'data_id'   : 'Age',
     'data_name' : DATA_METRICS['Age']
     }
 
@@ -27,7 +26,7 @@ LANG_METRICS = {'Only English': 'Only English',
                 }
 
 LANG_DEFAULT = {
-    'lang_metric_id'   : 'Only English',
+    'lang_id'   : 'Only English',
     'lang_name' : LANG_METRICS['Only English']
     }
 
@@ -125,10 +124,10 @@ def get_lang_metric_key(lang_name: str) -> str:
 @callback(
     Output(component_id = MAP_ID, 
            component_property = FIG),
-    [Input(component_id = DATA_ID, 
-           component_property = VAL),
-     Input(component_id = LANG_ID, 
-           component_property = VAL)]
+    Input(component_id = DATA_RADIO, 
+           component_property = 'value'),
+    Input(component_id = LANG_RADIO, 
+           component_property = 'value')
 )
 def US_map(df, data_name, lang_name) -> go.Figure:
 
@@ -156,6 +155,19 @@ def US_map(df, data_name, lang_name) -> go.Figure:
                         hover_name='State',
                         labels={data_name: 'value'},
                         color_continuous_scale='Viridis')
+    
+    fig.update_layout(
+        margin={
+            't': 0, 'b': 0
+            },
+        coloraxis = {
+            'colorbar': {
+                'len': 0.7,
+                'y': 0.15,
+                'yanchor': 'bottom'
+                }
+            }
+            )
 
 
     return fig
@@ -180,18 +192,17 @@ def apply_layout(app: Dash) -> None:
                           children = "Language Selector")
     
     
-    data_selector = dcc.RadioItems(id='data_selector',
+    data_selector = dcc.RadioItems(id=DATA_RADIO,
                                   options=list(DATA_METRICS.values()),
                                   value=DATA_DEFAULT['data_name'],
                                   labelStyle={'display': 'block'}
                                   )
     
-    lang_selector = dcc.RadioItems(id='language_selector',
-                                       options=list(LANG_METRICS.values()),
-                                        value=LANG_DEFAULT['lang_name'],
-                                        labelStyle={'display': 'block'},
-                                        inline = True
-                                        )
+    lang_selector = dcc.RadioItems(id=LANG_RADIO,
+                                   options=list(LANG_METRICS.values()),
+                                   value=LANG_DEFAULT['lang_name'],
+                                   labelStyle={'display': 'block'},
+                                    )
 
     map_title = html.H3(id='map_h',
                         children = apply_map_title(data_name = DATA_DEFAULT['data_name'], 
@@ -200,9 +211,9 @@ def apply_layout(app: Dash) -> None:
                         )
     
     heatmap = dcc.Graph(id=MAP_ID,
-                         figure = US_map(df = df, 
-                                         data_name = DATA_DEFAULT['data_name'], 
-                                         lang_name = LANG_DEFAULT['lang_name']
+                         figure = US_map(df, 
+                                         data_name=DATA_DEFAULT['data_name'], 
+                                         lang_name=LANG_DEFAULT['lang_name']
                                          ),
                          style={
                              'width': '90%', 
