@@ -1,82 +1,242 @@
 import dash
-from dash import dcc, html, Input, Output
+from dash import Dash, dcc, html, Input, Output, State, callback
 import plotly.express as px
 import pandas as pd
 import plotly.graph_objects as go
-import state_abbrev
+
+MAP_ID = 'heatmap'
+DATA_ID = 'data_selector'
+LANG_ID = "language_selector"
+FIG = 'figure'
+VAL = 'value'
+TITLE           = 'Language Diversity in the United States'
+
+DATA_METRICS = {'Age': 'Age',
+                'Poverty' :'Poverty',
+                'Education': 'Education'
+                }
+
+DATA_DEFAULT = {
+    'data_metric_id'   : 'Age',
+    'data_name' : DATA_METRICS['Age']
+    }
+
+LANG_METRICS = {'Only English': 'Only English',
+                'Spanish': 'Spanish',
+                'Other Language': 'Other Language'
+                }
+
+LANG_DEFAULT = {
+    'lang_metric_id'   : 'Only English',
+    'lang_name' : LANG_METRICS['Only English']
+    }
 
 df = pd.read_csv("percent_languages.csv", sep=",")
 
-df.state_abbrev_mapping(df, 'State', output_abbr = True)
+def abbrev(df, col) -> pd.DataFrame:
+    state2abbrev = {
+        'Alaska': 'AK',
+        'Alabama': 'AL',
+        'Arkansas': 'AR',
+        'Arizona': 'AZ',
+        'California': 'CA',
+        'Colorado': 'CO',
+        'Connecticut': 'CT',
+        'District of Columbia': 'DC',
+        'Delaware': 'DE',
+        'Florida': 'FL',
+        'Georgia': 'GA',
+        'Hawaii': 'HI',
+        'Iowa': 'IA',
+        'Idaho': 'ID',
+        'Illinois': 'IL',
+        'Indiana': 'IN',
+        'Kansas': 'KS',
+        'Kentucky': 'KY',
+        'Louisiana': 'LA',
+        'Massachusetts': 'MA',
+        'Maryland': 'MD',
+        'Maine': 'ME',
+        'Michigan': 'MI',
+        'Minnesota': 'MN',
+        'Missouri': 'MO',
+        'Mississippi': 'MS',
+        'Montana': 'MT',
+        'North Carolina': 'NC',
+        'North Dakota': 'ND',
+        'Nebraska': 'NE',
+        'New Hampshire': 'NH',
+        'New Jersey': 'NJ',
+        'New Mexico': 'NM',
+        'Nevada': 'NV',
+        'New York': 'NY',
+        'Ohio': 'OH',
+        'Oklahoma': 'OK',
+        'Oregon': 'OR',
+        'Pennsylvania': 'PA',
+        'Rhode Island': 'RI',
+        'South Carolina': 'SC',
+        'South Dakota': 'SD',
+        'Tennessee': 'TN',
+        'Texas': 'TX',
+        'Utah': 'UT',
+        'Virginia': 'VA',
+        'Vermont': 'VT',
+        'Washington': 'WA',
+        'Wisconsin': 'WI',
+        'West Virginia': 'WV',
+        'Wyoming': 'WY',
+        'Puerto Rico': 'PR',
+        'Virigin Islands': 'VI'
+    }
 
+    df[col] = df[col].str.strip().replace(state2abbrev)
+    return df
 
-app = dash.Dash(__name__)
+df = abbrev(df, 'State')
 
-# Define app layout
-app.layout = html.Div([
-    dcc.RadioItems(
-        id='data-selector',
-        options=[
-            {'label': 'Age', 'value': 'age'},
-            {'label': 'Poverty', 'value': 'poverty'},
-            {'label': 'Education', 'value': 'education'}
-        ],
-        value='age',
-        labelStyle={'display': 'block'}
-    ),
-    dcc.RadioItems(
-        id='language-selector',
-        options=[
-            {'label': 'Only English', 'value': 'Only English'},
-            {'label': 'Spanish', 'value': 'Spanish'},
-            {'label': 'Other Language', 'value': 'Other Language'}
-        ],
-        value='Only English',
-        labelStyle={'display': 'block'},
-        inline = True,
+def run_app():
+    app = Dash(__name__)
+    app.title= TITLE
+    apply_layout(app)
+    app.run(debug=True)
+    return
 
-    ),
-    dcc.Graph(id='heatmap')
-])
+def get_data_default_metric_id() -> str:
+    return list(DATA_METRICS.keys())[0]
+
+def get_lang_default_metric_id() -> str:
+    return list(LANG_METRICS.keys())[0]
+
+def get_data_metric_key(data_name: str) -> str:
+    for key, value in DATA_METRICS.items():
+        if data_name == value:
+            return key
+    raise ValueError(f'{data_name} not in DATA METRICS')
+
+def get_lang_metric_key(lang_name: str) -> str:
+    for key, value in LANG_METRICS.items():
+        if lang_name == value:
+            return key
+    raise ValueError(f'{lang_name} not in LANG METRICS')
+
 
 # Define callback to update the heatmap based on selected data and language
-@app.callback(
-    Output('heatmap', 'figure'),
-    [Input('data-selector', 'value'),
-     Input('language-selector', 'value')]
+@callback(
+    Output(component_id = MAP_ID, 
+           component_property = FIG),
+    [Input(component_id = DATA_ID, 
+           component_property = VAL),
+     Input(component_id = LANG_ID, 
+           component_property = VAL)]
 )
-def update_heatmap(selected_data, selected_language):
-    # Select columns based on the selected data
-    if selected_data == 'age':
-        columns_to_display = ['5 to 17', '18 to 64', '65+']
-    elif selected_data == 'poverty':
-        columns_to_display = ['Below poverty level', 'At or above poverty level']
-    elif selected_data == 'education':
-        columns_to_display = ['Less than high school graduate', 'High school graduate',
+def US_map(df, data_name, lang_name) -> go.Figure:
+
+    data_id = get_data_metric_key(data_name)
+    lang_id = get_lang_metric_key(lang_name)
+    
+    if data_id == 'Age':
+        cols = ['5 to 17', '18 to 64', '65+']
+    elif data_id == 'Poverty':
+        cols = ['Below poverty level', 'At or above poverty level']
+    elif data_id == 'Education':
+        cols = ['Less than high school graduate', 'High school graduate',
                               'Some college or associate\'s degree', 'Bachelor\'s degree or higher']
 
 # Filter dataframe based on selected language
-    filtered_df = df.loc[df['Language'] == selected_language]
+    filtered_df = df.loc[df['Language'] == lang_id]
 
     
 # Generate heatmap using Plotly Express
     fig = px.choropleth(data_frame = filtered_df, 
                         locations='State', 
                         locationmode='USA-states',
-                        color='18 to 64', 
+                        color=cols[1], 
                         scope='usa', 
                         hover_name='State',
-                        title=f'{selected_language} Speakers - {selected_data.capitalize()} Heatmap',
+                        labels={data_name: 'value'},
                         color_continuous_scale='Viridis')
 
-    # Add additional columns if necessary
-    if len(columns_to_display) > 1:
-        for col in columns_to_display[1:]:
-            fig.add_scattergeo(locations=df['State'], locationmode='USA-states',
-                               marker=dict(color=filtered_df[col]), name=col)
 
     return fig
 
+def apply_map_title(data_name, lang_name) -> str :
+    data_id = get_data_metric_key(data_name)
+    lang_id = get_lang_metric_key(lang_name)
+
+    map_title = f'{lang_id} Speakers - {data_id.capitalize()} Heatmap'
+    return map_title
+
+def apply_layout(app: Dash) -> None:
+    content = []
+
+    header = html.H1(id='header',
+                     children = 'Linguistic Diversity in the United States'
+                     )
+    data_header = html.H3(id='data_h',
+                          children = "Data Selector")
+    
+    lang_header = html.H3(id='lang_h',
+                          children = "Language Selector")
+    
+    
+    data_selector = dcc.RadioItems(id='data_selector',
+                                  options=list(DATA_METRICS.values()),
+                                  value=DATA_DEFAULT['data_name'],
+                                  labelStyle={'display': 'block'}
+                                  )
+    
+    lang_selector = dcc.RadioItems(id='language_selector',
+                                       options=list(LANG_METRICS.values()),
+                                        value=LANG_DEFAULT['lang_name'],
+                                        labelStyle={'display': 'block'},
+                                        inline = True
+                                        )
+
+    map_title = html.H3(id='map_h',
+                        children = apply_map_title(data_name = DATA_DEFAULT['data_name'], 
+                                                   lang_name = LANG_DEFAULT['lang_name']
+                                                )
+                        )
+    
+    heatmap = dcc.Graph(id=MAP_ID,
+                         figure = US_map(df = df, 
+                                         data_name = DATA_DEFAULT['data_name'], 
+                                         lang_name = LANG_DEFAULT['lang_name']
+                                         ),
+                         style={
+                             'width': '90%', 
+                             'height': '70vh',
+                             'margin-top': '0px',
+                             'margin-bottom': '0px'
+                             },
+                         config={
+                             'displayModeBar': False,
+                             'scrollZoom': False,
+                             #'autosizable': True
+                             }
+                        )
+
+    content.append(header)
+    content.append(html.Hr())
+    content.append(data_header)
+    content.append(data_selector)
+    content.append(lang_header)
+    content.append(lang_selector)
+    content.append(map_title)
+    content.append(heatmap) 
+    content.append(html.Hr())
+
+    layout = html.Div(id = 'main_layout',
+                      style = {'margin' : 'auto',
+                               'width' : '75%'
+                               },
+                      children = content
+                      )
+    
+    app.layout = layout
+    return
+
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    run_app()
