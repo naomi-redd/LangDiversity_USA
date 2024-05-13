@@ -6,13 +6,13 @@ import plotly.graph_objects as go
 
 ####### TO-DO  #################
 # color bar:
-    # what shoul the scale be?
+    # what should the scale be?
     # how to anchor it and set size?
     # how to make it closer to graph?
 # layout:
     # how to set radios next to each other and dropdown below data radio?
     # edit style choices
-    
+
 # MAKE SURE IT WORKS FROM GIT HUB
 
 MAP_ID = 'heatmap'
