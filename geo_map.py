@@ -202,7 +202,8 @@ def generate_heatmap(dropdown_value, lang_value):
                 'len': 0.7,
                 'y': 0.15,
                 'yanchor': 'bottom',
-                'x' : 0.85
+                'x' : 0.85,
+                'title' : f'{dropdown_value} (%)'
                 }
             },
         title_font_size = 25,
