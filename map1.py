@@ -165,7 +165,7 @@ def dropdown_options(data_value):
         {'label': 'At or above poverty level', 'value': 'At or above poverty level'}]
         value = 'Below poverty level'
 
-    else: # data_value == "Education":
+    else: 
         cols = ['Less than high school graduate', 'High school graduate',
                 'Some college or associate\'s degree', 'Bachelor\'s degree or higher']
         options = [{'label': x, 'value': x} for x in cols]
@@ -212,11 +212,6 @@ def generate_heatmap(dropdown_value, lang_value):
 
     return fig
 
-#def update_heatmap(selected_data, selected_language):
- #   return generate_heatmap(selected_data, selected_language)
-
-#def update_m_title(selected_data, selected_language):
- #   return map_title(selected_data, selected_language)
 
 if __name__ == '__main__':
     app.run_server(debug=True)
