@@ -126,16 +126,12 @@ def get_lang_metric_key(lang_name: str) -> str:
 # Define callback to update the heatmap based on selected data and language
 @callback(
     Output(component_id = MAP_ID, 
-           component_property = FIG,
-           ),
+           component_property = FIG,),
     Input(component_id = DATA_RADIO, 
            component_property = 'value'),
     Input(component_id = LANG_RADIO,
-          component_property = 'value'),
-    prevent_initial_call= True
+          component_property = 'value')
 )
-
-
 
 def US_map(df: pd.DataFrame,
            data_name: str, 

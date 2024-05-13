@@ -1,190 +1,212 @@
+from dash import Dash, dcc, html, Input, Output, State, callback
+import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
-from dash import Dash, html, dcc, Input, Output, State, callback
-
-from datetime import datetime as dt
-import pandas as pd
-import numpy as np
-
-
-data = pd.read_csv("percent_languages.csv", sep=",")
-#-----------------------------------------------------------------------------
-
-# ToDo:
-#   - Slider bar labels are too small
-#   - More customization in the tooltips
-#   - Button for the log-x axis not yet implemented
-
-# ToDo:
-# 
-
+MAP_ID = 'heatmap'
+DATA_RADIO = 'data-selector'
+LANG_RADIO = "language-selector"
+FIG = 'figure'
+VAL = 'value'
 TITLE           = 'Language Diversity in the United States'
 
-HIST_ID         = 'hist'
-MAP_ID          = 'main-map'
+df = pd.read_csv("percent_languages.csv", sep=",")
 
-VAL             = 'value'
-FIG             = 'figure'
-
-METRIC_DROPDOWN = 'metric-dropdown'
-
-
-METRICS = {
-    'Only English'      : 'Only English',
-    'Other Language'    : 'Other Language',
-    'Spanish'           : 'Spanish'
+def abbrev(df, col) -> pd.DataFrame:
+    state2abbrev = {
+        'Alaska': 'AK',
+        'Alabama': 'AL',
+        'Arkansas': 'AR',
+        'Arizona': 'AZ',
+        'California': 'CA',
+        'Colorado': 'CO',
+        'Connecticut': 'CT',
+        'District of Columbia': 'DC',
+        'Delaware': 'DE',
+        'Florida': 'FL',
+        'Georgia': 'GA',
+        'Hawaii': 'HI',
+        'Iowa': 'IA',
+        'Idaho': 'ID',
+        'Illinois': 'IL',
+        'Indiana': 'IN',
+        'Kansas': 'KS',
+        'Kentucky': 'KY',
+        'Louisiana': 'LA',
+        'Massachusetts': 'MA',
+        'Maryland': 'MD',
+        'Maine': 'ME',
+        'Michigan': 'MI',
+        'Minnesota': 'MN',
+        'Missouri': 'MO',
+        'Mississippi': 'MS',
+        'Montana': 'MT',
+        'North Carolina': 'NC',
+        'North Dakota': 'ND',
+        'Nebraska': 'NE',
+        'New Hampshire': 'NH',
+        'New Jersey': 'NJ',
+        'New Mexico': 'NM',
+        'Nevada': 'NV',
+        'New York': 'NY',
+        'Ohio': 'OH',
+        'Oklahoma': 'OK',
+        'Oregon': 'OR',
+        'Pennsylvania': 'PA',
+        'Rhode Island': 'RI',
+        'South Carolina': 'SC',
+        'South Dakota': 'SD',
+        'Tennessee': 'TN',
+        'Texas': 'TX',
+        'Utah': 'UT',
+        'Virginia': 'VA',
+        'Vermont': 'VT',
+        'Washington': 'WA',
+        'Wisconsin': 'WI',
+        'West Virginia': 'WV',
+        'Wyoming': 'WY',
+        'Puerto Rico': 'PR',
+        'Virigin Islands': 'VI'
     }
 
-DEFAULTS = {
-    'metric_id'   : 'Only English',
-    'metric_name' : METRICS['Only English']
-    }
+    df[col] = df[col].str.strip().replace(state2abbrev)
+    return df
 
-def run_app():
-    print(f'''I am located at {__file__} 
-          and I started running at {str(dt.now())}''')
-    app = Dash(__name__)
-    app.title=TITLE
-    apply_main_layout(app)
-    app.run(debug=True)
-    return
+df = abbrev(df, 'State')
+
+app = Dash(__name__)
+
+# Define app layout
+app.layout = html.Div(
+    style = {'margin' : 'auto',
+             'width' : '75%',
+             'display': 'flex'
+            },
+    children = [
+    html.P(id='header',
+            children = 'Linguistic Diversity in the United States',
+            style = {'fontSize': 30, 'fontFamily': "Balto"}
+            ),
+    html.Hr(),
+    html.Div([
+        html.P(id='data_h',
+                children = "Data Selector",
+                style = {'fontSize': 20, 'fontFamily': "Balto"}),
+        dcc.RadioItems(
+            id='data-selector',
+            options=[
+                {'label': 'Age', 'value': 'Age'},
+                {'label': 'Poverty', 'value': 'Poverty'},
+                {'label': 'Education', 'value': 'Education'}
+                    ],
+            value='Age',
+            labelStyle={'display': 'block'}
+            ),
+        html.P(id='options',
+                children= "Please choose a demographic.",
+                style = {'fontSize': 15, 'fontFamily': "Balto"}),
+        dcc.Dropdown(id='dropdown',
+                     clearable=False,
+                     searchable=False)]),
+    html.Div([
+    html.P(id='lang_h',
+            children = "Language Selector",
+            style = {'fontSize': 20, 'fontFamily': "Balto"}),
+    dcc.RadioItems(
+        id='language-selector',
+        options=[
+            {'label': 'Only English', 'value': 'Only English'},
+            {'label': 'Spanish', 'value': 'Spanish'},
+            {'label': 'Other Language', 'value': 'Other Language'}
+        ],
+        value='Only English',
+        labelStyle={'display': 'block'}
+        ),
+        style = dict('width'= '50%')]
+        ),           
+    html.Br(), 
+    dcc.Graph(id='heatmap', 
+              style={
+                    'width': '100%', 
+                    'height': '70vh',
+                    'margin-top': '0px',
+                    'margin-bottom': '0px'
+                    },
+              config={
+                    'displayModeBar': False,
+                    'scrollZoom': False,
+                    }),
+    html.Hr()
+])
+
+@app.callback(
+        [Output('dropdown', 'options'),
+         Output('dropdown', 'value')],
+        Input('data-selector', 'value'))
+
+def dropdown_options(data_value):
+    if data_value == 'Age':
+        options = [{'label':'Age 5 to 17', 'value': '5 to 17' },
+        {'label': 'Age 18 to 64', 'value': '18 to 64'}, 
+        {'label':'Age 65+', 'value':'65+'}]
+        value = '5 to 17'
+
+    elif data_value == 'Poverty':
+        options = [{'label':'Below poverty level', 'value': 'Below poverty level' },
+        {'label': 'At or above poverty level', 'value': 'At or above poverty level'}]
+        value = 'Below poverty level'
+
+    else: # data_value == "Education":
+        cols = ['Less than high school graduate', 'High school graduate',
+                'Some college or associate\'s degree', 'Bachelor\'s degree or higher']
+        options = [{'label': x, 'value': x} for x in cols]
+        value = 'Less than high school graduate'
+
+    return options, value
 
 
-def get_default_metric_id() -> str:
-    return list(METRICS.keys())[0]
-
-def get_metric_key(metric_name: str) -> str:
-    for key, value in METRICS.items():
-        if metric_name == value:
-            return key
-    raise ValueError(f'{metric_name} not in METRICS')
-
-@callback(
-        Output(component_id=MAP_ID,
-               component_property=FIG,
-               ),
-        Output(component_id=HIST_ID,
-               component_property=FIG
-               ),
-        Input(component_id=METRIC_DROPDOWN,
-              component_property='value'
-              )
+# Define callback to update the heatmap based on selected data and language
+@app.callback(
+    Output('heatmap', 'figure'),
+    [Input('dropdown', 'value'),
+     Input('language-selector', 'value')]
 )
 
-def US_map(metric_name: str,
-                df: pd.DataFrame,
-              ) -> go.Figure:
+def generate_heatmap(dropdown_value, lang_value):
+    
 
-    metric_id = get_metric_key(metric_name)
+    # Filter dataframe based on selected language
+    filtered_df = df[df['Language'] == lang_value]
 
-    fig = px.choropleth(data_frame=df,     ## option to choose usa (scope)
-                        locations='State',
-                        color=metric_id,
-                        hover_name='State',
-                        hover_data={'State': False},
-                        range_color = [0, data[metric_id].max()],
-                        labels={metric_id: metric_name}
-                    )
+    # Generate heatmap using Plotly Express
+    fig = px.choropleth(filtered_df, locations='State', locationmode='USA-states',
+                        color=dropdown_value, scope='usa', hover_name='State',
+                        title = f'{lang_value} Speakers - {dropdown_value.capitalize()} Heatmap',
+                        color_continuous_scale='Viridis',
+                        range_color = [0, df[dropdown_value].max()])
+
     fig.update_layout(
-        margin={
-            't': 0, 'b': 0
-            },
         coloraxis = {
             'colorbar': {
                 'len': 0.7,
                 'y': 0.15,
                 'yanchor': 'bottom'
                 }
-            }
-            )
+            },
+        title_font_size = 25,
+        title_x= 0.5,
+        title_xanchor= 'center',
+        title_xref= 'paper',
+        font_family = 'Balto'
+        )
+
     return fig
 
-def world_distribution(metric_name: str = None,
-                       df: pd.DataFrame = None
-                       ) -> go.Figure:
-    
-    metric_id = get_metric_key(metric_name)
+#def update_heatmap(selected_data, selected_language):
+ #   return generate_heatmap(selected_data, selected_language)
 
-    for i, (age_group, color) in enumerate(zip(df.index, ['g', 'm', 'r'])):
-        px.histogram(df.loc[age_group], label=age_group, color=color)
-
-    #fig = px.histogram(data_frame=df[metric_id],
-    #                   range_x=[data[metric_id].min(), data[metric_id].max()]
-    #                   )
-    
-    # https://community.plotly.com/t/histogram-bin-size-with-plotly-express/38927/4
-    #fig.update_traces() <- good place to use get_clean_bins
-    fig.update_layout(margin={'t': 0, 'b': 0},
-                      bargap=0.1,
-                      yaxis_title='# of speakers',
-                      xaxis_title=metric_name,
-                      showlegend=False
-                      )
-    return fig
-
-#=============================================================================
-def apply_main_layout(app: Dash) -> None:
-    content = []
-
-    header = html.H1(id='header',
-                     children='Gapminder Dashboard'
-                     )
-
-    
-    metric_dropdown = dcc.Dropdown(id=METRIC_DROPDOWN,
-                                   options=list(METRICS.values()),
-                                   value=DEFAULTS['metric_name']
-                                   )
-    
-    main_map = dcc.Graph(id=MAP_ID,
-                         figure=US_map(metric_name=DEFAULTS['metric_name'],
-                                          ),
-                         #responsive=True,
-                         style={
-                             'width': '90%', 
-                             'height': '70vh',
-                             'margin-top': '0px',
-                             'margin-bottom': '0px'
-                             },
-                         config={
-                             'displayModeBar': False,
-                             'scrollZoom': False,
-                             #'autosizable': True
-                             }
-                         )
-    world_dist = dcc.Graph(id=HIST_ID,
-                           figure=world_distribution(metric_name=DEFAULTS['metric_name'],
-                                                     ),
-                           style={
-                               'width': '90%', 
-                               'height': '30vh',
-                               'margin-top': '0px',
-                               'margin-bottom': '0px'
-                               },
-                          )
-    
-    logarithmic_x = dcc.Checklist(id='LOG_X',
-                                  options=['Logarithmic x-axis']
-                                  )
-    
-    content.append(header)
-    content.append(html.Hr())
-    content.append(metric_dropdown)
-    content.append(world_dist)
-    content.append(logarithmic_x)
-    content.append(main_map)
-    content.append(html.Hr())
-
-    layout = html.Div(id            = 'main-layout',
-                      style         = {
-                                        'margin' : 'auto',
-                                        'width'  : '75%'
-                                    },
-                      children = content
-                      )
-    app.layout = layout
-    return
+#def update_m_title(selected_data, selected_language):
+ #   return map_title(selected_data, selected_language)
 
 if __name__ == '__main__':
-    run_app()
+    app.run_server(debug=True)
