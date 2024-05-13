@@ -89,7 +89,7 @@ app.layout = html.Div(className = 'main',
             ),
     html.P(id='summary',
            children = 'This dashboard shows the linguistic diversity across the United States within different demographics. The data selector chooses the demographic category, and the dropdown chooses the specific demographic. The language selector selects the language to be plotted.',
-           style = {'fontSize': 18, 'fontFamily': "Balto"}
+           style = {'fontSize': 17, 'fontFamily': "Balto"}
            ),
     html.Hr(),
     html.Div(className = 'row',
