@@ -3,12 +3,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
-
 ####### TO-DO  #################
-# color bar:
-    # what should the scale be?
-    # how to anchor it and set size?
-    # how to make it closer to graph?
 # layout:
     # how to set radios next to each other and dropdown below data radio?
     # edit style choices
@@ -89,50 +84,66 @@ df = abbrev(df, 'State')
 app = Dash(__name__)
 
 # Define app layout
-app.layout = html.Div(
+app.layout = html.Div(className = 'main',
     style = {'margin' : 'auto',
-             'width' : '75%'#,
-             #'display': 'flex'
+             'width' : '70%'
             },
     children = [
     html.P(id='header',
             children = 'Linguistic Diversity in the United States',
-            style = {'fontSize': 30, 'fontFamily': "Balto"}
+            style = {'fontSize': 30, 'fontFamily': "Balto", 'fontWeight' : 'bolder'}
             ),
     html.Hr(),
-    html.P(id='data_h',
-                children = "Data Selector",
-                style = {'fontSize': 20, 'fontFamily': "Balto"}),
-    dcc.RadioItems(
-        id='data-selector',
-        options=[
-            {'label': 'Age', 'value': 'Age'},
-            {'label': 'Poverty', 'value': 'Poverty'},
-            {'label': 'Education', 'value': 'Education'}
-                ],
-        value='Age',
-        labelStyle={'display': 'block'}
-        ),
-    html.P(id='options',
-        children= "Please choose a demographic.",
-        style = {'fontSize': 15, 'fontFamily': "Balto"}),
-    dcc.Dropdown(id='dropdown',
-        clearable=False,
-        searchable=False),
-    html.P(id='lang_h',
-            children = "Language Selector",
-            style = {'fontSize': 20, 'fontFamily': "Balto"}),
-    dcc.RadioItems(
-        id='language-selector',
-        options=[
-            {'label': 'Only English', 'value': 'Only English'},
-            {'label': 'Spanish', 'value': 'Spanish'},
-            {'label': 'Other Language', 'value': 'Other Language'}
-        ],
-        value='Only English',
-        labelStyle={'display': 'block'}
-        ),           
-    html.Br(), 
+    html.Div(className = 'row',
+             style = {'display': 'flex'},
+             children = [
+            html.Div(className = 'column',
+                style = {'width' : '50%'},
+                children = [
+                    html.P(id='data_h',
+                            children = "Data Selector",
+                            style = {'fontSize': 20, 'fontFamily': "Balto"}),
+                    dcc.RadioItems(
+                            id='data-selector',
+                            options=[
+                                    {'label': 'Age', 'value': 'Age'},
+                                    {'label': 'Poverty', 'value': 'Poverty'},
+                                    {'label': 'Education', 'value': 'Education'}
+                                    ],
+                            value='Age',
+                            labelStyle={'display': 'block', 'fontFamily': "Balto"}
+                            ),
+                    html.P(id='options',
+                            children= "Please choose a demographic.",
+                            style = {'fontSize': 15, 'fontFamily': "Balto"}),
+                    dcc.Dropdown(id='dropdown',
+                             style = {'fontFamily': "Balto"},
+                            clearable=False,
+                            searchable=False)
+                    ],
+            ),
+    
+    html.Div(className = 'column',
+             style = {'width' : '50%'}, 
+             children = [
+                 html.P(id='lang_h',
+                        children = "Language Selector",
+                        style = {'fontSize': 20, 'fontFamily': "Balto"}),
+                dcc.RadioItems(
+                        id='language-selector',
+                        options=[
+                                {'label': 'Only English', 'value': 'Only English'},
+                                {'label': 'Spanish', 'value': 'Spanish'},
+                                {'label': 'Other Language', 'value': 'Other Language'}
+                                ],
+                        value='Only English',
+                        labelStyle={'display': 'block', 'fontFamily': "Balto"}
+                        ),
+                ]
+            ) 
+ 
+             ]),
+
     dcc.Graph(id='heatmap', 
               style={
                     'width': '100%', 
@@ -143,10 +154,9 @@ app.layout = html.Div(
               config={
                     'displayModeBar': False,
                     'scrollZoom': False,
-                    }),
+                }),
     html.Hr()
-    ]
-)
+])
 
 @app.callback(
         [Output('dropdown', 'options'),
@@ -165,7 +175,7 @@ def dropdown_options(data_value):
         {'label': 'At or above poverty level', 'value': 'At or above poverty level'}]
         value = 'Below poverty level'
 
-    else: 
+    else: # data_value == "Education":
         cols = ['Less than high school graduate', 'High school graduate',
                 'Some college or associate\'s degree', 'Bachelor\'s degree or higher']
         options = [{'label': x, 'value': x} for x in cols]
@@ -174,7 +184,6 @@ def dropdown_options(data_value):
     return options, value
 
 
-# Define callback to update the heatmap based on selected data and language
 @app.callback(
     Output('heatmap', 'figure'),
     [Input('dropdown', 'value'),
@@ -183,31 +192,31 @@ def dropdown_options(data_value):
 
 def generate_heatmap(dropdown_value, lang_value):
     
-
-    # Filter dataframe based on selected language
+    # filter df
     filtered_df = df[df['Language'] == lang_value]
 
-    # Generate heatmap using Plotly Express
+    
     fig = px.choropleth(filtered_df, locations='State', locationmode='USA-states',
                         color=dropdown_value, scope='usa', hover_name='State',
                         title = f'{lang_value} Speakers - {dropdown_value.capitalize()} Heatmap',
                         color_continuous_scale='Viridis',
-                        range_color = [0, df[dropdown_value].max()]
-                        )
+                        range_color = [0, df[dropdown_value].max()])
 
     fig.update_layout(
         coloraxis = {
             'colorbar': {
                 'len': 0.7,
                 'y': 0.15,
-                'yanchor': 'bottom'
+                'yanchor': 'bottom',
+                'x' : 0.85
                 }
             },
         title_font_size = 25,
         title_x= 0.5,
         title_xanchor= 'center',
         title_xref= 'paper',
-        font_family = 'Balto'
+        font_family = 'Balto',
+        font_color = 'black'
         )
 
     return fig
@@ -215,3 +224,4 @@ def generate_heatmap(dropdown_value, lang_value):
 
 if __name__ == '__main__':
     app.run_server(debug=True)
+
