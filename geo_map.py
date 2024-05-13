@@ -87,6 +87,10 @@ app.layout = html.Div(className = 'main',
             children = 'Linguistic Diversity in the United States',
             style = {'fontSize': 30, 'fontFamily': "Balto", 'fontWeight' : 'bolder'}
             ),
+    html.P(id='summary',
+           children = 'This dashboard shows the linguistic diversity across the United States within different demographics. The data selector chooses the demographic category, and the dropdown chooses the specific demographic. The language selector selects the language to be plotted.',
+           style = {'fontSize': 18, 'fontFamily': "Balto"}
+           ),
     html.Hr(),
     html.Div(className = 'row',
              style = {'display': 'flex'},
