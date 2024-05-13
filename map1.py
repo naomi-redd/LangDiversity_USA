@@ -3,6 +3,18 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
+
+####### TO-DO  #################
+# color bar:
+    # what shoul the scale be?
+    # how to anchor it and set size?
+    # how to make it closer to graph?
+# layout:
+    # how to set radios next to each other and dropdown below data radio?
+    # edit style choices
+    
+# MAKE SURE IT WORKS FROM GIT HUB
+
 MAP_ID = 'heatmap'
 DATA_RADIO = 'data-selector'
 LANG_RADIO = "language-selector"
@@ -74,70 +86,42 @@ def abbrev(df, col) -> pd.DataFrame:
 
 df = abbrev(df, 'State')
 
-def generate_heatmap(selected_data, selected_language):
-    # Select columns based on the selected data
-    if selected_data == 'age':
-        columns_to_display = ['5 to 17', '18 to 64', '65+']
-    elif selected_data == 'poverty':
-        columns_to_display = ['Below poverty level', 'At or above poverty level']
-    elif selected_data == 'education':
-        columns_to_display = ['Less than high school graduate', 'High school graduate',
-                              'Some college or associate\'s degree', 'Bachelor\'s degree or higher']
-
-    # Filter dataframe based on selected language
-    filtered_df = df[df['Language'] == selected_language]
-
-    # Generate heatmap using Plotly Express
-    fig = px.choropleth(filtered_df, locations='State', locationmode='USA-states',
-                        color=columns_to_display, scope='usa', hover_name='State',
-                        title = f'{selected_language} Speakers - {selected_data.capitalize()} Heatmap',
-                        color_discrete_map='Pastel')
-
-    fig.update_layout(
-        margin={
-            't': 30, 'b': 0
-            },
-        coloraxis = {
-            'colorbar': {
-                'len': 0.7,
-                'y': 0.15,
-                'yanchor': 'bottom'
-                }
-            },
-        title_x = 0.5,
-        title_xanchor = 'center',
-        title_xref = 'paper'
-            )
-
-    return fig
-'''
-def map_title(selected_data, selected_language)-> str:
-    m_title = f'{selected_language} Speakers - {selected_data.capitalize()} Heatmap'
-    return m_title
-'''
-
 app = Dash(__name__)
 
 # Define app layout
-app.layout = html.Div([
-    html.H1(id='header',
-            children = 'Linguistic Diversity in the United States'
+app.layout = html.Div(
+    style = {'margin' : 'auto',
+             'width' : '75%'#,
+             #'display': 'flex'
+            },
+    children = [
+    html.P(id='header',
+            children = 'Linguistic Diversity in the United States',
+            style = {'fontSize': 30, 'fontFamily': "Balto"}
             ),
     html.Hr(),
-    html.H3(id='data_h',
-            children = "Data Selector"),
+    html.P(id='data_h',
+                children = "Data Selector",
+                style = {'fontSize': 20, 'fontFamily': "Balto"}),
     dcc.RadioItems(
         id='data-selector',
         options=[
-            {'label': 'Age', 'value': 'age'},
-            {'label': 'Poverty', 'value': 'poverty'},
-            {'label': 'Education', 'value': 'education'}
-        ],
-        value='age',
+            {'label': 'Age', 'value': 'Age'},
+            {'label': 'Poverty', 'value': 'Poverty'},
+            {'label': 'Education', 'value': 'Education'}
+                ],
+        value='Age',
         labelStyle={'display': 'block'}
-    ),
-    html.H3(id='lang_h',
-            children = "Language Selector"),
+        ),
+    html.P(id='options',
+        children= "Please choose a demographic.",
+        style = {'fontSize': 15, 'fontFamily': "Balto"}),
+    dcc.Dropdown(id='dropdown',
+        clearable=False,
+        searchable=False),
+    html.P(id='lang_h',
+            children = "Language Selector",
+            style = {'fontSize': 20, 'fontFamily': "Balto"}),
     dcc.RadioItems(
         id='language-selector',
         options=[
@@ -147,12 +131,11 @@ app.layout = html.Div([
         ],
         value='Only English',
         labelStyle={'display': 'block'}
-    ),           
+        ),           
     html.Br(), 
-    html.Br(),
     dcc.Graph(id='heatmap', 
               style={
-                    'width': '70%', 
+                    'width': '100%', 
                     'height': '70vh',
                     'margin-top': '0px',
                     'margin-bottom': '0px'
@@ -160,19 +143,77 @@ app.layout = html.Div([
               config={
                     'displayModeBar': False,
                     'scrollZoom': False,
-                    #'autosizable': True
                     }),
     html.Hr()
-])
+    ]
+)
+
+@app.callback(
+        [Output('dropdown', 'options'),
+         Output('dropdown', 'value')],
+        Input('data-selector', 'value'))
+
+def dropdown_options(data_value):
+    if data_value == 'Age':
+        options = [{'label':'Age 5 to 17', 'value': '5 to 17' },
+        {'label': 'Age 18 to 64', 'value': '18 to 64'}, 
+        {'label':'Age 65+', 'value':'65+'}]
+        value = '5 to 17'
+
+    elif data_value == 'Poverty':
+        options = [{'label':'Below poverty level', 'value': 'Below poverty level' },
+        {'label': 'At or above poverty level', 'value': 'At or above poverty level'}]
+        value = 'Below poverty level'
+
+    else: # data_value == "Education":
+        cols = ['Less than high school graduate', 'High school graduate',
+                'Some college or associate\'s degree', 'Bachelor\'s degree or higher']
+        options = [{'label': x, 'value': x} for x in cols]
+        value = 'Less than high school graduate'
+
+    return options, value
+
 
 # Define callback to update the heatmap based on selected data and language
 @app.callback(
     Output('heatmap', 'figure'),
-    [Input('data-selector', 'value'),
+    [Input('dropdown', 'value'),
      Input('language-selector', 'value')]
 )
-def update_heatmap(selected_data, selected_language):
-    return generate_heatmap(selected_data, selected_language)
+
+def generate_heatmap(dropdown_value, lang_value):
+    
+
+    # Filter dataframe based on selected language
+    filtered_df = df[df['Language'] == lang_value]
+
+    # Generate heatmap using Plotly Express
+    fig = px.choropleth(filtered_df, locations='State', locationmode='USA-states',
+                        color=dropdown_value, scope='usa', hover_name='State',
+                        title = f'{lang_value} Speakers - {dropdown_value.capitalize()} Heatmap',
+                        color_continuous_scale='Viridis'#,
+                        #range_color = [0, df[dropdown_value].max()]
+                        )
+
+    fig.update_layout(
+        coloraxis = {
+            'colorbar': {
+                'len': 0.7,
+                'y': 0.15,
+                'yanchor': 'bottom'
+                }
+            },
+        title_font_size = 25,
+        title_x= 0.5,
+        title_xanchor= 'center',
+        title_xref= 'paper',
+        font_family = 'Balto'
+        )
+
+    return fig
+
+#def update_heatmap(selected_data, selected_language):
+ #   return generate_heatmap(selected_data, selected_language)
 
 #def update_m_title(selected_data, selected_language):
  #   return map_title(selected_data, selected_language)
