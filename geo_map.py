@@ -3,12 +3,6 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
-####### TO-DO  #################
-# layout:
-    # how to set radios next to each other and dropdown below data radio?
-    # edit style choices
-
-# MAKE SURE IT WORKS FROM GIT HUB
 
 MAP_ID = 'heatmap'
 DATA_RADIO = 'data-selector'
