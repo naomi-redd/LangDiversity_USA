@@ -1,6 +1,6 @@
 from dash import Dash, dcc, html, Input, Output, State, callback
-import plotly.express as px
 import pandas as pd
+import plotly.express as px
 import plotly.graph_objects as go
 
 MAP_ID = 'heatmap'
@@ -108,29 +108,41 @@ def get_lang_default_metric_id() -> str:
     return list(LANG_METRICS.keys())[0]
 
 def get_data_metric_key(data_name: str) -> str:
-    for key, value in DATA_METRICS.items():
+    for d_key, value in DATA_METRICS.items():
         if data_name == value:
-            return key
+            return d_key
+        if data_name == 'Only English':
+            raise ValueError(f'Only English! ')
+
     raise ValueError(f'{data_name} not in DATA METRICS')
 
 def get_lang_metric_key(lang_name: str) -> str:
-    for key, value in LANG_METRICS.items():
+    for l_key, value in LANG_METRICS.items():
         if lang_name == value:
-            return key
+            return l_key
     raise ValueError(f'{lang_name} not in LANG METRICS')
 
 
 # Define callback to update the heatmap based on selected data and language
 @callback(
     Output(component_id = MAP_ID, 
-           component_property = FIG),
+           component_property = FIG,
+           ),
     Input(component_id = DATA_RADIO, 
            component_property = 'value'),
-    Input(component_id = LANG_RADIO, 
-           component_property = 'value')
+    Input(component_id = LANG_RADIO,
+          component_property = 'value'),
+    prevent_initial_call= True
 )
-def US_map(df, data_name, lang_name) -> go.Figure:
 
+
+
+def US_map(df: pd.DataFrame,
+           data_name: str, 
+           lang_name: str
+           ) -> go.Figure:
+
+    #lang_name = "Only English"
     data_id = get_data_metric_key(data_name)
     lang_id = get_lang_metric_key(lang_name)
     
@@ -248,6 +260,15 @@ def apply_layout(app: Dash) -> None:
     app.layout = layout
     return
 
-
+'''
+@callback(
+    Output('heatmap', 'figure'),
+    Input('data-selector', 'value'),
+     Input('language-selector', 'value')
+)
+def update_heatmap(selected_data, selected_language):
+    return US_map(df, data_name = selected_data, lang_name = selected_language)
+'''
+    
 if __name__ == '__main__':
     run_app()
