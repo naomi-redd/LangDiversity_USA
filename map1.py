@@ -191,8 +191,8 @@ def generate_heatmap(dropdown_value, lang_value):
     fig = px.choropleth(filtered_df, locations='State', locationmode='USA-states',
                         color=dropdown_value, scope='usa', hover_name='State',
                         title = f'{lang_value} Speakers - {dropdown_value.capitalize()} Heatmap',
-                        color_continuous_scale='Viridis'#,
-                        #range_color = [0, df[dropdown_value].max()]
+                        color_continuous_scale='Viridis',
+                        range_color = [0, df[dropdown_value].max()]
                         )
 
     fig.update_layout(
